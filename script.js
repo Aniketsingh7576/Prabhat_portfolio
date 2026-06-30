@@ -58,3 +58,44 @@ const countObs = new IntersectionObserver((entries, obs) => {
   });
 }, { threshold: 0.5 });
 document.querySelectorAll('[data-count]').forEach(el => countObs.observe(el));
+
+// ===== Contact form (AJAX submit to FormSubmit -> Prabhat's inbox) =====
+const contactForm = document.getElementById('contactForm');
+if (contactForm) {
+  const status = document.getElementById('formStatus');
+  const submitBtn = contactForm.querySelector('button[type="submit"]');
+  const btnLabel = submitBtn.innerHTML;
+
+  contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    status.className = 'form-status';
+    status.textContent = '';
+
+    if (!contactForm.checkValidity()) { contactForm.reportValidity(); return; }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'Sending...';
+
+    try {
+      const res = await fetch('https://formsubmit.co/ajax/singh.prabhat21@gmail.com', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: new FormData(contactForm)
+      });
+      const data = await res.json();
+      if (res.ok && (data.success === 'true' || data.success === true)) {
+        status.className = 'form-status success';
+        status.textContent = "Thanks! Your message has been sent — I'll get back to you soon.";
+        contactForm.reset();
+      } else {
+        throw new Error(data.message || 'Submission failed');
+      }
+    } catch (err) {
+      status.className = 'form-status error';
+      status.textContent = 'Something went wrong. Please email singh.prabhat21@gmail.com directly.';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = btnLabel;
+    }
+  });
+}
